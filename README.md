@@ -43,6 +43,8 @@ LaTeX, Chrome DevTools, PDF toolkit, image generation, and more.
 
 ## Install
 
+### Interactive
+
 ```bash
 # Add the marketplace
 /plugin marketplace add open-mnemex/mnemex-plugins
@@ -51,6 +53,21 @@ LaTeX, Chrome DevTools, PDF toolkit, image generation, and more.
 /plugin install mnemex-core@mnemex-plugins
 /plugin install macos-automation@mnemex-plugins
 /plugin install dev-tools@mnemex-plugins
+```
+
+### Headless (CLI)
+
+```bash
+# Add the marketplace from GitHub (owner/repo shorthand)
+claude plugin marketplace add open-mnemex/mnemex-plugins
+
+# Or use the full URL
+claude plugin marketplace add https://github.com/open-mnemex/mnemex-plugins
+
+# Install what you need
+claude plugin install mnemex-core@mnemex-plugins
+claude plugin install macos-automation@mnemex-plugins
+claude plugin install dev-tools@mnemex-plugins
 ```
 
 ## License
