@@ -1,0 +1,36 @@
+{
+  "name": "mnemex",
+  "owner": { "name": "Open Mnemex" },
+  "metadata": {
+    "description": "AI-powered digital life management skills"
+  },
+  "plugins": [
+    {
+      "name": "mnemex-core",
+      "source": "./plugins/mnemex-core",
+      "description": "Digital Life System: capture, inbox processing, project lifecycle",
+      "version": "1.0.0",
+      "license": "MIT",
+      "keywords": ["digital-life", "productivity", "organization"],
+      "category": "productivity"
+    },
+    {
+      "name": "macos-automation",
+      "source": "./plugins/macos-automation",
+      "description": "macOS app automation: Calendar, Mail, Reminders, Safari, WeChat",
+      "version": "1.0.0",
+      "license": "MIT",
+      "keywords": ["macos", "automation", "applescript"],
+      "category": "automation"
+    },
+    {
+      "name": "dev-tools",
+      "source": "./plugins/dev-tools",
+      "description": "Developer tools: LaTeX, Chrome DevTools, PDF, image generation",
+      "version": "1.0.0",
+      "license": "MIT",
+      "keywords": ["developer", "latex", "pdf", "chrome"],
+      "category": "development"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+# OS
+.DS_Store
+
+# Scripts and binaries (track only skill definitions)
+plugins/*/skills/*/scripts/
+plugins/*/skills/*/_meta.json
+
+# License files inside skills (from marketplace installs)
+plugins/*/skills/*/LICENSE*
