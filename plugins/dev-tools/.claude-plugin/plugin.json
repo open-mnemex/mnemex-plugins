@@ -1,0 +1,18 @@
+{
+  "name": "dev-tools",
+  "description": "Developer tools: LaTeX, Chrome DevTools, PDF, image gen",
+  "version": "1.0.0",
+  "agents": [
+    "./agents/chinese-translator.md",
+    "./agents/code-improvement-reviewer.md"
+  ],
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y", "chrome-devtools-mcp@latest",
+        "--browser-url=http://127.0.0.1:9222"
+      ]
+    }
+  }
+}
