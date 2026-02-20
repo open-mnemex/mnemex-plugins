@@ -5,6 +5,7 @@
 ```
 Project_Root/
 ├── main.tex              # Entry point (skeleton only)
+├── latexmkrc             # Build config (jobname, engine)
 ├── references.bib        # Bibliography database
 ├── sections/             # Chapter/section content
 │   ├── 01_xxx.tex
@@ -136,3 +137,42 @@ compile only the current chapter — speeds up compilation.
 - Always use numeric prefixes (`01_`, `02_`, ...).
 - Paper: name by paper structure (`01_introduction`).
 - Homework/report: name by topic (`01_forward_kinematics`).
+
+## Build Configuration (`latexmkrc`)
+
+Place a `latexmkrc` file in the project root to set the PDF output
+name and enforce the `xelatex` engine:
+
+```perl
+# latexmkrc — Build configuration
+$pdflatex = 'xelatex -interaction=nonstopmode -synctex=1 %O %S';
+$pdf_mode = 1;
+$jobname  = 'smith-2026-information-theory';   # ← set descriptive PDF name
+```
+
+### Why `latexmkrc` + `main.tex`?
+
+- `main.tex` stays as entry point → compatible with Overleaf, CI
+  templates, VS Code LaTeX Workshop, and arXiv submissions.
+- `$jobname` controls the output filename → PDF is descriptive for
+  sharing (e.g., `smith-2026-information-theory.pdf` instead of
+  `main.pdf`).
+- arXiv recommends `ms.tex` as an alternative, but `main.tex` +
+  `latexmkrc` is more portable across toolchains.
+
+### Naming convention
+
+Format: `author-year-shorttitle` (all lowercase, hyphens).
+
+| Document type     | Example jobname                         |
+|-------------------|-----------------------------------------|
+| Research paper    | `smith-2026-information-theory`         |
+| Homework          | `smith-ece101-hw3`                      |
+| Thesis            | `smith-2026-msc-thesis`                 |
+| Course notes      | `smith-cs229-lecture-notes`             |
+
+Build command:
+
+```bash
+latexmk main.tex        # uses latexmkrc settings automatically
+```

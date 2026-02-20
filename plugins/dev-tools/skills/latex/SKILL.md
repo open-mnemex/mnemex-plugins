@@ -14,6 +14,11 @@ description: >-
 
 - Always use `xelatex`, never `pdflatex`.
 - Magic comment at top of file: `% !TEX program = xelatex`
+- Keep entry point as `main.tex` (Overleaf / CI compatible).
+- Use `latexmkrc` in project root to set a descriptive PDF output name.
+- Naming convention: `author-year-shorttitle`
+  (e.g., `smith-2026-information-theory`).
+- Build: `latexmk main.tex` → produces `smith-2026-information-theory.pdf`.
 
 ## 2. Multi-Step Derivations (CRITICAL)
 
