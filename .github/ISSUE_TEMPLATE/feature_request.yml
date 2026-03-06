@@ -1,0 +1,35 @@
+name: Feature Request
+description: Propose a new capability or workflow.
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: input
+    id: area
+    attributes:
+      label: Target plugin or skill
+      placeholder: mnemex-core / macos-automation / dev-tools
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem are we solving?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe expected behavior and API/UX impact.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+

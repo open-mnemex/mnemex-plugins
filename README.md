@@ -81,6 +81,17 @@ bash scripts/bootstrap-user.sh
 
 Private data is created under `~/.mnemex/facts/<skill-name>/facts.yaml` and will not be overwritten by skill updates.
 
+## Contributing
+
+Use Issue + PR workflow:
+
+1. Open an Issue first (`bug` or `feature`)
+2. Create a branch
+3. Open a PR linked to the Issue
+4. Merge with squash after checks pass
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full rules.
+
 ## License
 
 [MIT](LICENSE)
