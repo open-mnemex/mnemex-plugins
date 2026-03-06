@@ -37,6 +37,7 @@ One command to capture anything into the Digital Life System.
 | `travel` | Resources | `30_Resources/Lists/Travel_List.md` |
 | `wishlist` | Resources | `30_Resources/Lists/Wishlist.md` |
 | `puzzle` | Resources | `30_Resources/Lists/Puzzles.md` |
+| `paper` | Resources | `30_Resources/Lists/Paper_List.md` |
 | `concept` | Resources | `30_Resources/Concepts/` |
 
 > **Full type definitions, templates, and field rules** are in
@@ -84,6 +85,45 @@ For types that route to `00_Vault`:
 For types that route to `20_Areas` or `30_Resources`:
 - No linkage update needed.
 
+## Diagram Capture (图表捕获)
+
+When the source content contains a diagram, chart, flowchart,
+timeline, or any visual structure:
+
+1. **Create `.drawio.svg`** — one file that is both:
+   - A renderable SVG image (any markdown viewer)
+   - An editable draw.io source (VSCode / draw.io desktop)
+   - Full drawio XML is embedded in the SVG `content` attribute
+2. **Embed in the `.md` article** with `![alt](filename.drawio.svg)`
+3. **Do NOT create** separate `.drawio`, `.excalidraw`, or Mermaid
+4. **Output**: two files per article with diagrams:
+   ```
+   YYYY-MM-DD_title.md            ← article text + embedded SVG
+   YYYY-MM-DD_title.drawio.svg   ← diagram (render + edit)
+   ```
+
+### Color Scheme
+
+| Role | Fill | Stroke |
+|------|------|--------|
+| Title | `#fff2cc` | `#d6b656` |
+| Category A (e.g. products) | `#d5e8d4` | `#82b366` |
+| Category B (e.g. academic) | `#dae8fc` | `#6c8ebf` |
+| Neutral (e.g. months) | `#f5f5f5` | `#666666` |
+| Summary / takeaways | `#e1d5e7` | `#9673a6` |
+
+### SVG Structure
+
+```xml
+<svg ... content="&lt;mxfile...&gt;...drawio XML...&lt;/mxfile&gt;">
+  <!-- Pure SVG shapes for rendering -->
+  <rect ... /><text ... />
+</svg>
+```
+
+The `content` attribute holds the URL-encoded drawio XML.
+Draw.io reads this for editing; browsers render the SVG shapes.
+
 ## Usage Examples
 
 ```
@@ -91,6 +131,7 @@ For types that route to `20_Areas` or `30_Resources`:
 /capture "Happiness should be viewed microscopically..." — 某作者
 /capture 户主：某联系人 账号：EXAMPLE_ACCOUNT_ID
 /capture [screenshot of a book recommendation]
+/capture [screenshot of a flowchart] ← creates .md + .drawio.svg
 ```
 
 ## Adding New Types

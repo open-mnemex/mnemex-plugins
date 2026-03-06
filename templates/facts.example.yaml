@@ -1,0 +1,18 @@
+# Copy this file to your private local path:
+#   ~/.mnemex/facts/<skill-name>/facts.yaml
+#
+# Never commit real personal data into this repository.
+
+profile:
+  display_name: "Your Name"
+  locale: "en-US"
+  timezone: "America/Los_Angeles"
+
+contacts:
+  - name: "Example Contact"
+    role: "teammate"
+    notes: "Replace with your own local data."
+
+preferences:
+  writing_style: "concise"
+  language: "zh-CN"

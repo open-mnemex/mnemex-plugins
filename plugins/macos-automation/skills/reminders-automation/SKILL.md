@@ -6,6 +6,8 @@ description: |
   managing reminder lists, or any task management via Reminders.
   Triggers: "remind me to", "add a reminder", "create task", "check my reminders",
   "mark as done", "what's on my todo list", "set due date", "flag this task".
+  Triggers (中文): "提醒我", "加提醒", "设提醒", "提醒事项", "待办", "建任务",
+  "标记完成", "看看待办", "设截止日期".
 ---
 
 # Reminders Automation

@@ -6,6 +6,8 @@ description: |
   organizing messages (flag, archive, delete), or any email-related task.
   Triggers: "check my email", "send email to", "find emails from", "unread count",
   "download attachments", "archive old emails", "flag important messages".
+  Triggers (中文): "查邮件", "发邮件", "看邮件", "收件箱", "写邮件",
+  "下载附件", "归档邮件", "标记重要邮件", "未读邮件".
 ---
 
 # Mail Automation

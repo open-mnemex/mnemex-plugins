@@ -30,16 +30,15 @@ Control native macOS apps via AppleScript.
 
 ### `dev-tools` — Developer Tools
 
-LaTeX, Chrome DevTools, PDF toolkit, image generation, and more.
+LaTeX, PDF toolkit, image generation, and more.
 
 | Skills | Agents |
 |--------|--------|
 | `/latex` | `chinese-translator` |
-| `/chrome-devtools` | `code-improvement-reviewer` |
 | `/pdf` | |
 | `/skill-creator` | |
 | `/nano-banana-pro` | |
-| `/jsonl-to-markdown` | |
+| `—` | `code-improvement-reviewer` |
 
 ## Install
 
@@ -69,6 +68,18 @@ claude plugin install mnemex-core@mnemex
 claude plugin install macos-automation@mnemex
 claude plugin install dev-tools@mnemex
 ```
+
+## Personal Data
+
+Do not store personal facts inside this repository.
+
+Initialize local private facts storage:
+
+```bash
+bash scripts/bootstrap-user.sh
+```
+
+Private data is created under `~/.mnemex/facts/<skill-name>/facts.yaml` and will not be overwritten by skill updates.
 
 ## License
 

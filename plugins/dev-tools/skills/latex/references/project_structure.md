@@ -1,178 +1,107 @@
 # LaTeX Project Structure & Initialization
 
-## Directory Layout
+## Standard Directory Layout
 
 ```
 Project_Root/
 ├── main.tex              # Entry point (skeleton only)
-├── latexmkrc             # Build config (jobname, engine)
+├── Makefile              # Development & Release automation
+├── latexmkrc             # Engine settings (xelatex)
 ├── references.bib        # Bibliography database
-├── sections/             # Chapter/section content
-│   ├── 01_xxx.tex
-│   ├── 02_xxx.tex
-│   └── ...
+├── sections/             # Chapter/section content (01_xxx.tex, ...)
+├── appendices/           # Appendix content (A_xxx.tex, ...)
 ├── figures/              # All image assets
-├── appendix/             # (Optional) Appendix content
-│   ├── A_xxx.tex
-│   └── B_xxx.tex
-├── styles/               # Preamble & custom packages
-│   └── preamble.tex
-└── output/               # (Optional) Build artifacts
+└── .vscode/
+    └── settings.json     # VS Code visual hiding rules
 ```
 
-### Section naming by document type
+## Multi-Version Architecture (Conferences)
 
-**Research paper** — use standard paper sections:
+For projects with different submission requirements (e.g., ICRA vs. IROS), use multiple entry points sharing the same content.
 
+### Directory Layout
 ```
-sections/
-├── 00_abstract.tex
-├── 01_introduction.tex
-├── 02_methodology.tex
-├── 03_experiments.tex
-└── 04_conclusion.tex
-```
-
-**Homework / report / other** — name by topic, not paper structure:
-
-```
-sections/
-├── 01_forward_kinematics.tex
-├── 02_inverse_kinematics.tex
-├── 03_jacobian.tex
-└── 04_workspace_analysis.tex
+Project_Root/
+├── main_icra.tex         # ICRA entry point
+├── main_iros.tex         # IROS entry point
+├── Makefile              # Handles targets: all, icra, iros, release
+├── sections/             # Shared content
+│   ├── 01_intro.tex
+│   └── ...
+└── ...
 ```
 
-Rule: always use numeric prefixes (`01_`, `02_`, ...) so files
-sort by logical order.
+### Makefile for Multi-Version
+```makefile
+VERSIONS = icra iros
+.PHONY: all clean release $(VERSIONS)
 
-## main.tex — Skeleton Only
+all: $(VERSIONS)
 
-`main.tex` assembles parts; it must not contain actual content.
+# Rule to compile a specific version: make icra -> compiles main_icra.tex
+$(VERSIONS):
+	latexmk -pdf -xelatex main_$@.tex
 
+release: all
+	cp main_icra.pdf author-2026-icra-submission.pdf
+	cp main_iros.pdf author-2026-iros-submission.pdf
+	@echo "Submission versions ready."
+
+clean:
+	latexmk -C
+	rm -f *.pdf *.xdv *.synctex.gz
+```
+
+### Conditional Content
+Use simple `\newcommand` or the `etoolbox` package in entry points to toggle content.
+
+**In main_icra.tex:**
 ```latex
-% !TEX program = xelatex
-\documentclass[12pt, a4paper]{article}
-
-\input{styles/preamble}
-
-\title{Your Title Here}
-\author{Author Name}
-\date{\today}
-
-\begin{document}
-\maketitle
-% \input{sections/00_abstract}   % paper only
-\tableofcontents
-\newpage
-
-\input{sections/01_xxx}
-\input{sections/02_xxx}
-
-% \appendix                       % uncomment if needed
-% \input{appendix/A_xxx}
-% \input{appendix/B_xxx}
-
-% \bibliographystyle{plain}      % uncomment if needed
-% \bibliography{references}
-\end{document}
+\newcommand{\conference}{ICRA}
+\input{sections/01_intro}
 ```
 
-## styles/preamble.tex
-
-Move all `\usepackage` out of `main.tex` into preamble:
-
+**In sections/01_intro.tex:**
 ```latex
-% styles/preamble.tex
-\usepackage[margin=1in]{geometry}
-\usepackage{amsmath,amssymb}
-\usepackage{booktabs}
-\usepackage{float}
-\usepackage{graphicx}
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{fancyhdr}
-\usepackage{siunitx}
-\usepackage{hyperref}          % load near end
-
-\graphicspath{{figures/}}
+\ifdefstring{\conference}{ICRA}{
+    This text is specific to ICRA.
+}{
+    This text is for other versions.
+}
 ```
 
-## `\input` vs `\include`
+## VS Code settings.json (Visual Hiding)
 
-| Command          | Behavior                         | Use Case                |
-|------------------|----------------------------------|-------------------------|
-| `\input{file}`   | Direct insertion, no page break  | Sections, short content |
-| `\include{file}` | Forces `\clearpage` before/after | Main chapters only      |
+```json
+{
+    "files.exclude": {
+        "**/*.aux": true,
+        "**/*.fdb_latexmk": true,
+        "**/*.fls": true,
+        "**/*.log": true,
+        "**/*.out": true,
+        "**/*.synctex.gz": true,
+        "**/*.xdv": true,
+        "**/*.bbl": true,
+        "**/*.blg": true,
+        "**/*.run.xml": true,
+        "**/*.bcf": true
+    }
+}
+```
 
-Use `\includeonly{sections/02_methodology}` during drafting to
-compile only the current chapter — speeds up compilation.
-
-## Image Management
-
-- Use `\graphicspath{{figures/}}` so `\includegraphics` needs
-  only filenames, not paths.
-- For many images, use subfolders:
-  `\graphicspath{{figures/ch1/}{figures/ch2/}}`
-- Always use relative paths.
-
-## .gitignore for LaTeX
+## .gitignore
 
 ```gitignore
 *.aux
 *.log
 *.out
-*.toc
-*.lof
-*.lot
 *.fls
 *.fdb_latexmk
 *.synctex.gz
 *.bbl
 *.blg
-```
-
-## Section File Naming
-
-- Always use numeric prefixes (`01_`, `02_`, ...).
-- Paper: name by paper structure (`01_introduction`).
-- Homework/report: name by topic (`01_forward_kinematics`).
-
-## Build Configuration (`latexmkrc`)
-
-Place a `latexmkrc` file in the project root to set the PDF output
-name and enforce the `xelatex` engine:
-
-```perl
-# latexmkrc — Build configuration
-$pdflatex = 'xelatex -interaction=nonstopmode -synctex=1 %O %S';
-$pdf_mode = 1;
-$jobname  = 'smith-2026-information-theory';   # ← set descriptive PDF name
-```
-
-### Why `latexmkrc` + `main.tex`?
-
-- `main.tex` stays as entry point → compatible with Overleaf, CI
-  templates, VS Code LaTeX Workshop, and arXiv submissions.
-- `$jobname` controls the output filename → PDF is descriptive for
-  sharing (e.g., `smith-2026-information-theory.pdf` instead of
-  `main.pdf`).
-- arXiv recommends `ms.tex` as an alternative, but `main.tex` +
-  `latexmkrc` is more portable across toolchains.
-
-### Naming convention
-
-Format: `author-year-shorttitle` (all lowercase, hyphens).
-
-| Document type     | Example jobname                         |
-|-------------------|-----------------------------------------|
-| Research paper    | `smith-2026-information-theory`         |
-| Homework          | `smith-ece101-hw3`                      |
-| Thesis            | `smith-2026-msc-thesis`                 |
-| Course notes      | `smith-cs229-lecture-notes`             |
-
-Build command:
-
-```bash
-latexmk main.tex        # uses latexmkrc settings automatically
+*.xdv
+*.run.xml
+*.bcf
 ```

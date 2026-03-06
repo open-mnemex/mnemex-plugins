@@ -3,7 +3,14 @@
 
 # Scripts and binaries (track only skill definitions)
 plugins/*/skills/*/scripts/
+plugins/*/skills/*/bin/
+plugins/*/skills/*/*.skill
 plugins/*/skills/*/_meta.json
+
+# Local/private user data
+facts/
+*.local.yaml
+*.private.md
 
 # License files inside skills (from marketplace installs)
 plugins/*/skills/*/LICENSE*

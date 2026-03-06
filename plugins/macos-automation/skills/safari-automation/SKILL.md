@@ -7,6 +7,8 @@ description: |
   Triggers: "open this URL", "get page title", "list all tabs", "close tab",
   "run JavaScript on page", "add to reading list", "what tabs are open",
   "extract text from webpage", "take page screenshot".
+  Triggers (中文): "打开网页", "看网页", "浏览器", "打开链接", "Safari",
+  "列出标签页", "关闭标签", "加到阅读列表", "提取网页内容".
 ---
 
 # Safari Automation

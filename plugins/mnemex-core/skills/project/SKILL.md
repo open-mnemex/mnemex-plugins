@@ -5,6 +5,8 @@ description: |
   Commands: /project init, /project reorg, /project archive, /project link
   Triggers: "new project", "start project", "organize folder", "archive project",
   "link vault files", "init project", "create project"
+  Triggers (中文): "新项目", "建项目", "整理项目", "重新整理",
+  "归档项目", "项目初始化", "整理文件夹"
 ---
 
 # Project Lifecycle Management
@@ -20,6 +22,63 @@ Vault linkage.
 | `/project reorg <path>` | Reorganize existing folder to project structure |
 | `/project archive [name]` | Archive completed project |
 | `/project link [name]` | Add/update Vault symlinks for project |
+
+---
+
+## Project Placement Rules
+
+Projects are placed in one of two locations based on category:
+
+| Category | Location | Reason |
+|----------|----------|--------|
+| `Research`, `Dev` | `~/Developer/` + symlink in `10_Projects/` | Git repos, heavy deps — keep off iCloud |
+| All others | `~/Documents/10_Projects/` | Lightweight document projects — iCloud backup |
+
+**Folder semantics (回到本质):**
+- `01_Input/` — what comes in (reference material, read-only)
+- `02_Drafts/` — what you create (your intellectual output)
+- `03_Output/` — what goes out (final deliverables)
+- `99_Admin/` — management overhead (meetings, correspondence,
+  submission records — not input, not output, not the work itself)
+
+**Developer-based projects** (Research/Dev):
+- Body at `~/Developer/YYYY_Category_ProjectName/`
+- Symlink from `~/Documents/10_Projects/YYYY_Category_ProjectName` → Developer path
+- Auto `git init` on creation
+- Get `_index.md` (pure topology file)
+- `02_Drafts/` contains: `code/`, `notes/`, `writing/`,
+  `experiments/`, `presentations/`
+- `99_Admin/` contains: `meetings/`
+- Vault symlinks use **absolute paths** (`~/Documents/00_Vault/...`)
+
+**Document-based projects** (all others):
+- Live directly in `~/Documents/10_Projects/YYYY_Category_ProjectName/`
+- No `_index.md`, no `02_Drafts/` subfolders
+- Vault symlinks use **relative paths** (`../../../00_Vault/...`)
+
+## Submodule Rules (Developer-based only)
+
+Developer-based projects can embed external Git repos as submodules.
+Placement follows the standard folder semantics:
+
+| Role | Folder | Example |
+|------|--------|---------|
+| Read-only reference / baseline | `01_Input/` | Upstream paper's official repo |
+| Active development / your code | `02_Drafts/code/` | Your fork or own repo |
+| Paper / Overleaf sync | `paper/` (top-level) | Overleaf Git-synced repo |
+
+```bash
+# Example: add a fork you're actively modifying
+git submodule add https://github.com/YOU/forked-repo.git 02_Drafts/code/forked-repo
+
+# Example: add upstream code as read-only reference
+git submodule add https://github.com/author/original-repo.git 01_Input/original-repo
+```
+
+Submodules are local, but their **remote URLs** should still appear
+in `_index.md` for discoverability (mark with "(submodule)").
+`_index.md` also maps any external nodes that live **outside** the
+project folder.
 
 ---
 
@@ -55,13 +114,74 @@ Validate silently (warn only if fails):
 
 ## Execution
 
-### 1. Create Structure
+### 1. Determine Placement
+
+Check the inferred Category against Placement Rules:
+- **Research or Dev** → Developer-based
+- **All others** → Document-based
+
+### 2. Create Structure
+
+**Developer-based** (Research/Dev):
 
 ```bash
-mkdir -p ~/Documents/10_Projects/YYYY_Category_ProjectName/{01_Input,02_Drafts,03_Output,99_Admin}
+# NOTE: Brace expansion fails in non-interactive shells.
+# Use explicit mkdir calls instead.
+P=~/Developer/YYYY_Category_ProjectName
+mkdir -p $P/01_Input
+mkdir -p $P/02_Drafts/code
+mkdir -p $P/02_Drafts/notes
+mkdir -p $P/02_Drafts/writing
+mkdir -p $P/02_Drafts/experiments
+mkdir -p $P/02_Drafts/presentations
+mkdir -p $P/03_Output
+mkdir -p $P/99_Admin/meetings
+# Initialize Git
+cd $P && git init
+# Symlink into 10_Projects for unified view
+ln -s $P ~/Documents/10_Projects/YYYY_Category_ProjectName
 ```
 
-### 2. Create 00_PLAN.md
+**Document-based** (all others):
+
+```bash
+P=~/Documents/10_Projects/YYYY_Category_ProjectName
+mkdir -p $P/01_Input $P/02_Drafts $P/03_Output $P/99_Admin
+```
+
+### 3. Add Submodules (Developer-based only)
+
+Ask the user: "Are there existing repos to bring into this project?"
+(e.g., a fork to build on, an upstream baseline, an Overleaf paper repo)
+
+If yes, add them as submodules following the Submodule Rules:
+- Fork / active dev / own code → `02_Drafts/code/`
+- Read-only reference → `01_Input/`
+- Paper repo → `paper/`
+
+```bash
+git submodule add <repo-url> <target-folder>/<repo-name>
+```
+
+### 4. Create _index.md (Developer-based only)
+
+A pure topology file — maps this project's external nodes
+(repos, platforms, services). Contains ONLY pointers,
+no status or planning content. Like `index.js` — just re-exports.
+
+```markdown
+# [Project Name]
+
+- Code: ~/Developer/repo-name
+- Paper: ~/Developer/overleaf/project-name
+- Website: ~/Developer/project-name.github.io
+```
+
+Only include pointers that actually exist.
+Remove lines that don't apply.
+Ask the user what external nodes this project connects to.
+
+### 5. Create 00_PLAN.md
 
 ```markdown
 # Project Plan: [Project Name]
@@ -72,55 +192,63 @@ mkdir -p ~/Documents/10_Projects/YYYY_Category_ProjectName/{01_Input,02_Drafts,0
 
 ---
 
-## 1. Definition of Done (以终为始)
+## 1. Current Status (当前状态)
+*最后更新：YYYY-MM-DD*
+
+**现在卡在哪里**：项目刚初始化
+**下一步**：[Inferred first action]
+
+## 2. Definition of Done (以终为始)
 > [Inferred end state]
 
-## 2. Deliverables (交付物)
+## 3. Deliverables (交付物)
 - [ ] [Deliverable 1]
 - [ ] [Deliverable 2]
 
-## 3. Vault Linkage (事实链接)
+## 4. Decision Log (决策日志)
+
+### YYYY-MM-DD — 项目启动
+**背景**：[Why this project was created]
+**决策**：[Initial approach chosen]
+
+## 5. Vault Linkage (事实链接)
 > Files linked from 00_Vault (Use Symlinks `ln -s`)
 -
 
-## 4. Key Dates & Deadlines
+## 6. Key Dates & Deadlines
 | Date | Event |
 |------|-------|
 | YYYY-MM-DD | Project created |
 
-## 5. Project Structure (项目结构)
-```
-YYYY_Category_ProjectName/
-├── 00_PLAN.md
-├── 01_Input/          # Source materials, references
-├── 02_Drafts/         # Work in progress
-├── 03_Output/         # Final deliverables
-└── 99_Admin/          # Vault symlinks, admin files
-```
-
-## 6. Resources & References
--
-
-## 7. Notes
+## 7. Resources & References
 -
 
 ## 8. Log & Next Actions (日志与行动)
 - [ ] Project initialized @date(today)
 ```
 
-### 3. Linkage Ritual
+### 6. Linkage Ritual
 
 Search `~/Documents/00_Vault/` for relevant files (by date, entity, keywords).
 If found, create symlinks in `99_Admin/`:
+
+**Document-based** (relative paths):
 
 ```bash
 cd ~/Documents/10_Projects/YYYY_Category_ProjectName/99_Admin
 ln -s "../../../00_Vault/path/to/file.pdf" .
 ```
 
-Document links in 00_PLAN.md Section 3 (Vault Linkage).
+**Developer-based** (absolute paths):
 
-### 4. Update Project Inventory
+```bash
+cd ~/Developer/YYYY_Category_ProjectName/99_Admin
+ln -s ~/Documents/00_Vault/path/to/file.pdf .
+```
+
+Document links in 00_PLAN.md Section 5 (Vault Linkage).
+
+### 7. Update Project Inventory
 
 Add to Active Projects table in `~/Documents/10_Projects/README.md`:
 
@@ -133,8 +261,9 @@ Add to Active Projects table in `~/Documents/10_Projects/README.md`:
 Report:
 1. Created structure (tree view)
 2. Inferred details (Name, Category, Definition of Done, Deliverables)
-3. Vault files linked (if any)
-4. Suggested next actions
+3. Project placement (Developer-based or Document-based)
+4. Vault files linked (if any)
+5. Suggested next actions
 
 ---
 
@@ -164,7 +293,10 @@ Path to existing folder (can be in Legacy, Downloads, or anywhere).
 
 ### 3. Ask User for Destination
 
-Display project summary and ask:
+Display project summary. Apply Placement Rules based on Category:
+- Active Research/Dev → `~/Developer/` + symlink
+- Active (other) → `~/Documents/10_Projects/`
+- Completed → `~/Documents/99_Archives/`
 
 ```
 Project Analysis:
@@ -172,17 +304,31 @@ Project Analysis:
 - Category: [Inferred]
 - Name: [Inferred]
 - Files: N documents
+- Placement: [Developer-based / Document-based]
 
 Is this project ACTIVE or COMPLETED?
-- Active → 10_Projects/
+- Active → [Developer or 10_Projects based on category]
 - Completed → 99_Archives/
 ```
 
 ### 4. Create Standard Structure
 
+Follow the same Placement Rules as `/project init`:
+- Research/Dev: create in `~/Developer/`, symlink, git init, _index.md
+- Others: create in `~/Documents/10_Projects/`
+
+### 4b. Scan for Existing Repos (Developer-based only)
+
+Search `~/Developer/` for repos related to this project by keywords:
+
 ```bash
-mkdir -p TARGET/YYYY_Category_ProjectName/{01_Input,02_Drafts,03_Output,99_Admin}
+ls -d ~/Developer/*/ | grep -i "<keywords>"
 ```
+
+For each match, check `git remote -v` to understand the repo's role,
+then offer as submodule candidate. Map to standard locations per
+Submodule Rules (code → `02_Drafts/code/`, paper → `paper/`,
+reference → `01_Input/`).
 
 ### 5. Categorize and Move Files
 
@@ -190,10 +336,10 @@ Sort files into appropriate subfolders:
 
 | File Type | Destination |
 |-----------|-------------|
-| Source materials, references | `01_Input/` |
-| Drafts, work-in-progress | `02_Drafts/` |
-| Final outputs, deliverables | `03_Output/` |
-| Admin files, receipts, correspondence | `99_Admin/` |
+| Source materials, references | `01_Input/` (incoming, read-only) |
+| Your notes, code, writing, experiments | `02_Drafts/` (your creation) |
+| Final outputs, deliverables | `03_Output/` (outgoing) |
+| Meeting notes, receipts, correspondence | `99_Admin/` (overhead) |
 
 ### 6. Rename Files to VNS Format
 
@@ -225,6 +371,7 @@ Identify files that belong in Vault (official documents, receipts, legal):
 ### 9. Generate 00_PLAN.md
 
 Include complete timeline and file inventory.
+For Developer-based projects, also generate `_index.md`.
 
 ### 10. Handle Edge Cases
 
@@ -252,13 +399,14 @@ Project name (optional). If not provided, list projects for selection.
 
 ### 1. Select Project
 
-If no name provided:
+If no name provided, list all active projects. Mark Developer-based
+projects in the list:
 
 ```
 Active Projects:
 1. 2025_Asset_Sale_Laptop/
 2. 2025_Event_Travel_Conference/
-3. 2026_Academic_StateU_CS301/
+3. 2026_Research_SciCraft/  [Developer-based]
 
 Select project to archive (number or name):
 ```
@@ -286,8 +434,24 @@ Add final log entry:
 
 ### 4. Move to Archives
 
+**Document-based projects:**
+
 ```bash
 mv ~/Documents/10_Projects/YYYY_Category_ProjectName/ ~/Documents/99_Archives/
+```
+
+**Developer-based projects:**
+
+```bash
+# 1. Zip the project (preserves full Git history)
+cd ~/Developer
+zip -r YYYY_Category_ProjectName.zip YYYY_Category_ProjectName/
+# 2. Move zip to Archives
+mv YYYY_Category_ProjectName.zip ~/Documents/99_Archives/
+# 3. Remove symlink from 10_Projects
+rm ~/Documents/10_Projects/YYYY_Category_ProjectName
+# 4. Remove original from Developer
+rm -rf ~/Developer/YYYY_Category_ProjectName
 ```
 
 ### 5. Update Project Inventory
@@ -297,9 +461,9 @@ Update status to **Archived** if keeping the row.
 
 ## Preservation Policy
 
-- Keep ALL files and folders intact
-- Preserve ALL symlinks (they still work after move)
-- Do NOT delete any content
+- For Document-based: keep ALL files and symlinks intact
+- For Developer-based: zip preserves complete Git history and all files
+- Do NOT delete any content without archiving first
 
 ---
 
@@ -319,6 +483,9 @@ Determine project from:
 - Explicit name argument
 - Current working directory
 - Interactive selection
+
+Detect if project is Developer-based (body in `~/Developer/`) or
+Document-based (body in `~/Documents/10_Projects/`).
 
 ### 2. Extract Search Terms
 
@@ -356,37 +523,48 @@ Select files to link (comma-separated numbers, or 'all'):
 
 ### 5. Create Symlinks
 
+**Document-based** (relative paths):
+
 ```bash
 cd ~/Documents/10_Projects/YYYY_Category_ProjectName/99_Admin
 ln -s "../../../00_Vault/path/to/file.pdf" .
 ```
 
+**Developer-based** (absolute paths):
+
+```bash
+cd ~/Developer/YYYY_Category_ProjectName/99_Admin
+ln -s ~/Documents/00_Vault/path/to/file.pdf .
+```
+
 ### 6. Update 00_PLAN.md
 
-Add to Section 3 (Vault Linkage):
+Add to Section 5 (Vault Linkage):
 
 ```markdown
-## 3. Vault Linkage (事实链接)
-- [2025-01-15_Receipt_Apple_macbook_tradein.pdf](../../../00_Vault/03_Financial/Receipts/...)
-- [2025-01-10_Contract_Apple_device_agreement.pdf](../../../00_Vault/04_Legal/Contracts/...)
+## 5. Vault Linkage (事实链接)
+- [filename.pdf](path/to/vault/file.pdf)
 ```
 
 ---
 
 # Project Categories Reference
 
-| Category | Description | Examples |
-|----------|-------------|----------|
-| Admin | Administrative tasks, applications | Passport renewal, license application |
-| Sale | Selling items | MacBook trade-in, eBay listing |
-| Claim | Claims, disputes, refunds | Insurance claim, credit card dispute |
-| Dev | Software development | Personal app, open source contribution |
-| Research | Academic research | Paper writing, experiments |
-| Creation | Creative projects | Video production, writing, design |
-| Travel | Trips, events, conferences | CES 2026, vacation planning |
-| Litigation | Legal cases | Tenant dispute, lawsuit defense |
-| Immigration | Visa and status | F1 application, green card |
-| Course | Academic courses | StateU CS301, online certification |
+Categories follow the 7 Pillars hierarchy. Use the most specific
+subtype that applies.
+
+| Pillar | Subtypes | Placement | Description |
+|--------|----------|-----------|-------------|
+| **Legal** | `Litigation`, `Immigration` | Document | Law, contracts, government filings |
+| **Asset** | `Sale` | Document | Buy/sell/maintain valuables |
+| **Admin** | `Claim` | Document | Forms, compliance, bureaucracy |
+| **Research** | — | **Developer** | Papers, experiments, discovery |
+| **Dev** | — | **Developer** | Code, systems, engineering |
+| **Academic** | `Course` | Document | Courses with grades |
+| **Event** | `Travel`, `Creation` | Document | Trips, conferences, creative projects |
+
+**Naming:** Use the subtype when it applies (`2025_Litigation_...`),
+fall back to the pillar (`2025_Legal_...`) when no subtype fits.
 
 ---
 

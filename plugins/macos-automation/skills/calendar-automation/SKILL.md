@@ -7,6 +7,8 @@ description: |
   Triggers: "schedule a meeting", "add to calendar", "create event", "block time",
   "check my calendar", "what's on my schedule", "move the meeting", "cancel appointment",
   "set up weekly standup", "remind me before".
+  Triggers (中文): "加日历", "建日程", "排会议", "看日程", "日历", "加到日历",
+  "改会议时间", "取消会议", "设每周例会", "查日程".
 ---
 
 # Calendar Automation

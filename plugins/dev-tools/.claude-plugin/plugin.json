@@ -1,7 +1,7 @@
 {
   "name": "dev-tools",
   "description": "Developer tools: LaTeX, PDF, image gen",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "agents": [
     "./agents/chinese-translator.md",
     "./agents/code-improvement-reviewer.md"
