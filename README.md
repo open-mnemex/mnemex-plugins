@@ -34,7 +34,7 @@ LaTeX, PDF toolkit, image generation, and more.
 
 | Skills | Agents |
 |--------|--------|
-| `/latex` | `chinese-translator` |
+| `/latex` | `—` |
 | `/pdf` | |
 | `/skill-creator` | |
 | `/nano-banana-pro` | |
