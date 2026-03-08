@@ -1,0 +1,178 @@
+#!/usr/bin/env python3
+"""
+Chrome Bookmarks CLI
+
+Usage:
+  chrome-bookmarks list <path>
+  chrome-bookmarks tree
+  chrome-bookmarks search <query>
+  chrome-bookmarks mkdir <path>
+  chrome-bookmarks move --pattern <regex> <source> <destination>
+  chrome-bookmarks rename <id> <title>
+  chrome-bookmarks remove <id>
+"""
+
+import json
+import socket
+import sys
+
+SOCKET_PATH = "/tmp/chrome-bookmarks.sock"
+TIMEOUT = 5
+
+
+def send_command(command, args=None):
+    """Send a command to the native messaging host via Unix socket."""
+    try:
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.settimeout(TIMEOUT)
+        sock.connect(SOCKET_PATH)
+    except FileNotFoundError:
+        print("Error: Host not running. Make sure the Chrome extension is active.", file=sys.stderr)
+        print("  1. Open Chrome and load the extension from:", file=sys.stderr)
+        print("     ~/Developer/chrome-bookmark-manager/extension/", file=sys.stderr)
+        print("  2. The host starts automatically when the extension connects.", file=sys.stderr)
+        sys.exit(1)
+    except ConnectionRefusedError:
+        print("Error: Connection refused. The host may have crashed.", file=sys.stderr)
+        print("  Try reloading the Chrome extension.", file=sys.stderr)
+        sys.exit(1)
+
+    request = {"command": command}
+    if args:
+        request["args"] = args
+
+    try:
+        sock.sendall(json.dumps(request).encode("utf-8"))
+        sock.shutdown(socket.SHUT_WR)
+
+        chunks = []
+        while True:
+            chunk = sock.recv(65536)
+            if not chunk:
+                break
+            chunks.append(chunk)
+
+        data = b"".join(chunks)
+        response = json.loads(data.decode("utf-8"))
+
+        if response.get("success"):
+            return response.get("data")
+        else:
+            print(f"Error: {response.get('error', 'Unknown error')}", file=sys.stderr)
+            sys.exit(1)
+
+    except socket.timeout:
+        print("Error: Request timed out. Is the extension responding?", file=sys.stderr)
+        sys.exit(1)
+    finally:
+        sock.close()
+
+
+def print_json(data):
+    print(json.dumps(data, indent=2, ensure_ascii=False))
+
+
+def print_list(data):
+    folder = data["folder"]
+    children = data["children"]
+    print(f'{folder["title"]} ({data["count"]} items)')
+    print("-" * 60)
+    for child in children:
+        icon = "\U0001f4c1" if child["type"] == "folder" else "\U0001f517"
+        line = f"  {icon} {child['title']}"
+        if child.get("url"):
+            line += f"  [{child['id']}]"
+        elif child["type"] == "folder":
+            line += f"  ({child.get('childCount', 0)} items) [{child['id']}]"
+        print(line)
+
+
+def print_search(data):
+    results = data["results"]
+    print(f"Found {data['count']} results")
+    print("-" * 60)
+    for r in results:
+        icon = "\U0001f4c1" if r["type"] == "folder" else "\U0001f517"
+        line = f"  {icon} {r['title']}  [{r['id']}]"
+        if r.get("url"):
+            line += f"\n       {r['url']}"
+        print(line)
+
+
+def usage():
+    print("Usage:")
+    print("  chrome-bookmarks list <path>                           List folder contents")
+    print("  chrome-bookmarks tree                                  Full bookmark tree")
+    print("  chrome-bookmarks search <query>                        Search bookmarks")
+    print("  chrome-bookmarks mkdir <path>                          Create folder")
+    print("  chrome-bookmarks move --pattern <regex> <src> <dst>    Move matching items")
+    print("  chrome-bookmarks rename <id> <title>                   Rename bookmark/folder")
+    print("  chrome-bookmarks remove <id>                           Delete bookmark/folder")
+    sys.exit(1)
+
+
+def main():
+    args = sys.argv[1:]
+    if not args:
+        usage()
+
+    cmd = args[0]
+
+    if cmd == "list":
+        if len(args) < 2:
+            usage()
+        data = send_command("list", {"path": args[1]})
+        print_list(data)
+
+    elif cmd == "tree":
+        data = send_command("tree")
+        print_json(data)
+
+    elif cmd == "search":
+        if len(args) < 2:
+            usage()
+        data = send_command("search", {"query": args[1]})
+        print_search(data)
+
+    elif cmd == "mkdir":
+        if len(args) < 2:
+            usage()
+        data = send_command("mkdir", {"path": args[1]})
+        print(f"Created folder: {data['title']} [{data['id']}]")
+
+    elif cmd == "move":
+        # parse: move --pattern <regex> <source> <destination>
+        if len(args) < 5 or args[1] != "--pattern":
+            usage()
+        pattern = args[2]
+        source = args[3]
+        destination = args[4]
+        data = send_command("move", {
+            "pattern": pattern,
+            "source": source,
+            "destination": destination,
+        })
+        print(f"Moved {data['count']} items:")
+        for item in data.get("moved", []):
+            print(f"  - {item['title']}")
+
+    elif cmd == "rename":
+        if len(args) < 3:
+            usage()
+        data = send_command("rename", {"id": args[1], "title": args[2]})
+        print(f"Renamed: {data['title']} [{data['id']}]")
+
+    elif cmd == "remove":
+        if len(args) < 2:
+            usage()
+        data = send_command("remove", {"id": args[1]})
+        removed = data["removed"]
+        print(f"Removed: {removed['title']} [{removed['id']}]")
+
+    else:
+        print(f"Unknown command: {cmd}", file=sys.stderr)
+        usage()
+
+
+if __name__ == "__main__":
+    main()

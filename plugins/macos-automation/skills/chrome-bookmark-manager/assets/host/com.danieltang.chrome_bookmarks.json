@@ -1,0 +1,7 @@
+{
+  "name": "com.danieltang.chrome_bookmarks",
+  "description": "Chrome Bookmarks CLI Bridge",
+  "path": "/Users/danieltang/Developer/chrome-bookmark-manager/host/chrome_bookmarks_host.py",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://hlamepcmhoalekmlbkclpfckalogcpmp/"]
+}
