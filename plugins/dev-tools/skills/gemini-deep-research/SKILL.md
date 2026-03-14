@@ -186,9 +186,21 @@ Briefly tell the user what the research plan covers before starting the poll.
 
 Deep Research takes 3-15 minutes. Use background sleep + check.
 
-**First check**: 2 minutes after start.
-**Subsequent checks**: every 10 minutes.
-**Max checks**: 6 (~60 minutes total).
+**First check**: 5 minutes after start.
+**Subsequent checks**: every 5 minutes.
+**Max checks**: 12 (~60 minutes total).
+
+**Important**: Do NOT poll more frequently than every 5 minutes. Frequent polling
+wastes context window and provides no benefit — Gemini's progress is slow and
+incremental. A 5-minute interval balances responsiveness with efficiency.
+
+**Single-timer rule**: Only ONE background sleep timer may be active at a time.
+Wait for the previous timer's notification before launching the next one.
+
+**No idle polling**: While a background timer is running, do NOT perform any
+foreground status checks. Each API turn re-sends the full context (~60K cached
+tokens). Wait for the timer notification, check once, then either extract the
+report or launch one more timer.
 
 ```bash
 # Run in background
@@ -216,6 +228,33 @@ EOF
 - `hasExport = true` → report is done (Export button visible)
 - `text.length > 10000` + `stillResearching = false` → report is done
 - `stillResearching = true` → still in progress, report progress to user
+- Same `text.length` for 3+ consecutive checks (~15 min) → **stalled**, trigger fallback (Step 5.1)
+
+### Step 5.1: Stall detection and fallback
+
+If `text.length` is unchanged for 3 consecutive checks (~15 min), Gemini is likely stuck
+in its thinking loop without producing a final report. This happens especially with
+complex cross-disciplinary queries that cause Gemini to browse 80+ websites.
+
+**Fallback procedure:**
+1. **First, try refreshing the page** — Gemini may have finished but the UI is stuck:
+   ```bash
+   osascript -e 'tell application "Google Chrome" to reload tab '"$GEMINI_TAB"' of window '"$GEMINI_WINDOW"'' 2>/dev/null
+   sleep 5
+   ```
+   After refresh, check again for completion indicators (`Export` button, `Share & export`).
+   If the report now appears, proceed to Step 6 extraction as normal.
+2. If refresh doesn't help, extract all available content via JS chunk method (Method C in Step 6):
+   ```bash
+   > /tmp/gemini_report_raw.txt
+   for i in 0 8000 16000 24000 32000 40000; do
+     osascript -e "tell application \"Google Chrome\" to execute tab $GEMINI_TAB of window $GEMINI_WINDOW javascript \"document.body.innerText.substring($i, $((i+8000)))\"" >> /tmp/gemini_report_raw.txt
+   done
+   ```
+3. The extracted content contains Gemini's thinking notes + browsed URLs — these are valuable even without a final report
+4. Use `WebSearch` to supplement with targeted queries based on the thinking content and browsed URLs
+5. Compile a manual report combining Gemini's browsed sources + web search results
+6. Inform the user that Gemini stalled and the report was manually compiled
 
 **If tab was lost** (window/tab index changed), find Gemini by scanning all windows/tabs:
 ```bash
@@ -324,6 +363,26 @@ pbpaste > /tmp/gemini_report_raw.txt
 | **B: JS select + Cmd+C** | Works without extra tools | May include some extra text from response container |
 
 Both produce ~40-50KB of clean report content. Method A is preferred when available.
+
+#### Method C: JS chunk extraction (fallback for partial/stuck reports)
+
+When Gemini is stuck (Step 5.1) or Methods A/B fail to capture full content, extract
+the page text in 8KB chunks via JS. This reliably captures thinking notes, browsed
+URLs, and any partial report — even when CSS selectors in Method B miss the Deep
+Research thinking panel.
+
+```bash
+> /tmp/gemini_report_raw.txt
+for i in 0 8000 16000 24000 32000 40000; do
+  osascript -e "tell application \"Google Chrome\" to execute tab $GEMINI_TAB of window $GEMINI_WINDOW javascript \"document.body.innerText.substring($i, $((i+8000)))\"" >> /tmp/gemini_report_raw.txt
+done
+wc -c /tmp/gemini_report_raw.txt
+```
+
+**Why this works when Method B fails**: Method B's CSS selectors
+(`.response-container-content`, `[class*=model-response]`) don't match the Deep
+Research thinking panel. `document.body.innerText` captures everything visible on the
+page regardless of DOM structure.
 
 ### Step 7: Clean up and save as Markdown
 

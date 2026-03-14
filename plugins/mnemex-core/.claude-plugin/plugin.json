@@ -1,6 +1,6 @@
 {
   "name": "mnemex-core",
   "description": "Digital Life System: capture, inbox processing, project lifecycle",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "agents": ["./agents/pdf-analyzer.md", "./agents/pdf-renamer.md"]
 }

@@ -341,6 +341,36 @@ Sort files into appropriate subfolders:
 | Final outputs, deliverables | `03_Output/` (outgoing) |
 | Meeting notes, receipts, correspondence | `99_Admin/` (overhead) |
 
+### 5b. PDF Parsing Convention (MinerU)
+
+When a PDF needs to be converted to searchable Markdown (e.g., for
+reference materials in `01_Input/`), use MinerU (`mineru` CLI) and
+follow this structure:
+
+```
+DocumentName.pdf              ← original PDF stays here
+DocumentName/                 ← parsed output in sibling folder
+├── DocumentName.md           ← Markdown conversion
+└── images/                   ← extracted images, renamed descriptively
+    ├── fig1_descriptive_name.jpg
+    └── fig2_descriptive_name.jpg
+```
+
+**Rules:**
+- The folder name matches the PDF filename (without `.ext`)
+- Original PDF and its parsed folder live side by side
+- Never mix parsed output (`.md` + `images/`) directly alongside
+  unrelated PDFs — always contain them in a subfolder
+- Rename extracted images from hashes to descriptive names
+  (e.g., `challenge1_inclined_obstacle_terrain.jpg` not `b91d1c...jpg`)
+- Markdown image paths use relative `images/` references
+
+```bash
+# Example workflow
+mineru -p input.pdf -o /tmp/mineru_output -m auto -l en
+# Then copy .md + images/ into the sibling folder, rename images
+```
+
 ### 6. Rename Files to VNS Format
 
 **Format:** `YYYY-MM-DD_Category_Entity_Description.ext`

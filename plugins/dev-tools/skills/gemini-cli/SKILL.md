@@ -21,6 +21,7 @@ description: |
 | Batch questions | `~/.claude/skills/gemini-cli/scripts/gemini_helper.sh batch questions.txt` |
 | Batch files | `~/.claude/skills/gemini-cli/scripts/gemini_helper.sh batch-files "Review this" f1.py f2.py` |
 | Document review | `gemini -p "Review path/to/spec.md for issues" --yolo -o text 2>/dev/null` |
+| Handwritten PDF | Pre-split with `pdftocairo -jpeg`, then `gemini -p "Transcribe..." < page.jpg` |
 | List sessions | `gemini --list-sessions 2>/dev/null` |
 | Start tracked session | `gemini_helper.sh session-start "prompt" [--yolo]` |
 | Resume by UUID | `gemini_helper.sh session-resume <uuid> "prompt" [--yolo]` |
@@ -71,6 +72,27 @@ gemini -p "Search the web for how to implement OAuth2 PKCE flow in Python and su
 # Needs --yolo for file/grep tools
 gemini -p "Analyze the project structure in this directory. Identify the main entry points, key abstractions, and dependency graph" --yolo -o text 2>/dev/null
 ```
+
+### Handwritten PDF / Image Transcription
+```bash
+# Step 1: Claude pre-converts PDF pages to JPGs (avoid Gemini tool-call overhead)
+mkdir -p /tmp/gemini-pdf-pages
+pdftocairo -jpeg -r 200 "input.pdf" /tmp/gemini-pdf-pages/page
+
+# Step 2: Batch-transcribe each page image via Gemini multimodal
+for img in /tmp/gemini-pdf-pages/page-*.jpg; do
+  gemini -p "Transcribe this handwritten page to Markdown. Use LaTeX (\$...\$) for math. Describe diagrams in blockquotes. Output ONLY markdown." -o text 2>/dev/null < "$img"
+done > output.md
+
+# Cleanup
+rm -rf /tmp/gemini-pdf-pages
+```
+
+**Why pre-split:** Giving Gemini the raw PDF via `--yolo` causes it to
+spend many internal tool calls (qpdf → pdfseparate → pdftocairo) and
+pollutes the output with "thinking" noise. Pre-converting to JPGs lets
+Gemini's multimodal vision process each page directly — cleaner output,
+fewer tokens, no `--yolo` needed.
 
 ### Document / Spec Review
 ```bash
