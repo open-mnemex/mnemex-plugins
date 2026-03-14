@@ -135,17 +135,61 @@ multiple workers' results.
 $S stop workers
 ```
 
+## Multi-Round Orchestration
+
+For complex tasks requiring iteration (review→fix→test cycles),
+use a round-based pattern where workers read each other's output
+files from previous rounds.
+
+### Pattern
+
+1. **Round N**: Dispatch tasks, each worker writes to a file
+2. **Between rounds**: Commander reads output, decides next step
+3. **Round N+1**: New tasks reference files from round N
+
+### Example: Code → Review → Fix → Test cycle
+
+```bash
+# Round 1: parallel code writing
+$S send workers:0.0 "Write /tmp/proj/module.py ..." cc
+$S send workers:0.1 "Write /tmp/proj/server.py ..." cc
+
+# Round 2: review (reads round 1 output)
+$S send workers:0.2 "Read /tmp/proj/module.py and \
+/tmp/proj/server.py. Write review to /tmp/proj/review.md" cc
+
+# Round 3: fix (reads review)
+$S send workers:0.0 "Read /tmp/proj/review.md. Fix all \
+issues in /tmp/proj/module.py" cc
+
+# Round 4: test (validates fixes)
+$S send workers:0.2 "Run tests and write results to \
+/tmp/proj/test_results.md" cc
+```
+
+### Key principles
+
+- Workers share state through **files**, not messages
+- Commander decides next round based on output inspection
+- Wait for ALL workers in a round before starting next round
+- Write output files to the **project dir**, not workspace
+  (workers need to read each other's source code)
+
 ## Direct tmux Commands
 
 ```bash
 # --- Claude Code ---
-tmux send-keys -t T 'message' Enter
-tmux display -t T -p '#{pane_title}'  # ✳ = idle
+tmux send-keys -t T 'message'           # text first
+sleep 0.3
+tmux send-keys -t T Enter               # submit
+sleep 0.3
+tmux send-keys -t T Enter               # dismiss paste preview
+tmux display -t T -p '#{pane_title}'    # ✳ = idle
 
 # --- Gemini CLI ---
-tmux send-keys -t T 'message'         # text first
+tmux send-keys -t T 'message'           # text first
 sleep 0.3
-tmux send-keys -t T Enter             # Enter separately
+tmux send-keys -t T Enter               # Enter separately
 tmux capture-pane -t T -p | grep "esc to cancel"  # busy?
 
 # --- Common ---

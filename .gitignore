@@ -1,8 +1,8 @@
 # OS
 .DS_Store
 
-# Scripts and binaries (track only skill definitions)
-plugins/*/skills/*/scripts/
+# Binaries and compiled artifacts
+__pycache__/
 plugins/*/skills/*/bin/
 plugins/*/skills/*/*.skill
 plugins/*/skills/*/_meta.json
